@@ -8,9 +8,7 @@ version: "3"
 services:
 
   invidious:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: quay.io/invidious/invidious:latest-arm64
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
@@ -24,6 +22,25 @@ services:
       interval: 30s
       timeout: 5s
       retries: 2
+    logging:
+      options:
+        max-size: "1G"
+        max-file: "4"
+    depends_on:
+      - invidious-db
+
+  inv_sig_helper:
+    image: quay.io/invidious/inv-sig-helper:latest
+    init: true
+    command: ["--tcp", "0.0.0.0:12999"]
+    environment:
+      - RUST_LOG=info
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
 
   invidious-db:
     image: docker.io/library/postgres:14
